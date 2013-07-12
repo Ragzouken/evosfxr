@@ -4,7 +4,7 @@
   <output>
     <movie outputType="Application" />
     <movie input="" />
-    <movie path="bin\sweepsfxr.swf" />
+    <movie path="bin\evosfxr.swf" />
     <movie fps="25" />
     <movie width="640" />
     <movie height="160" />

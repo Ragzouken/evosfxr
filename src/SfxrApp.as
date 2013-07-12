@@ -77,7 +77,7 @@
 	 * limitations under the License.
 	 */
 	
-	[SWF(width='640', height='160', backgroundColor='#C0B090', frameRate='25')]
+	[SWF(width='640', height='800', backgroundColor='#C0B090', frameRate='25')]
 	public class SfxrApp extends Sprite
 	{
 		//--------------------------------------------------------------------------
@@ -165,6 +165,39 @@
 		}
 		
 		//--------------------------------------------------------------------------
+		//
+		//  Individuals
+		//
+		//--------------------------------------------------------------------------
+		
+		private function addIndividual(x:int, y:int):void
+		{
+			var synth:SfxrSynth = new SfxrSynth();
+			
+			synth.params.randomize();
+			synth.params.waveType = 0;
+			
+			var play:Function = function():void {
+				synth.play();
+			}
+			
+			var save:Function = function():void {
+				var file:ByteArray = getSettingsFile(synth);
+				new FileReference().save(file, "sfx.sfs");
+			}
+			
+			var export:Function = function():void {
+				var file:ByteArray = _synthS.getWavFile(_sampleRate, _bitDepth);
+				new FileReference().save(file, "sfx.wav");
+			}
+			
+			addButton("PLAY",   play,   x,      y);
+			addButton("SELECT", null,   x,      y + 25, true);
+			addButton(".SFS",   save,   x,      y + 50, false, 48);
+			addButton(".WAV",   export, x + 56, y + 50, false, 48);
+		}
+		
+		//--------------------------------------------------------------------------
 		//	
 		//  Button Methods
 		//
@@ -173,19 +206,16 @@
 		private function setupSweeper():void
 		{
 			_synthL = new SfxrSynth();
-			_synthC = new SfxrSynth();
 			_synthR = new SfxrSynth();
 			_synthS = new SfxrSynth();
 			
 			_synthL.params.randomize();
-			_synthC.params.randomize();
 			_synthR.params.randomize();
 			
 			_synthL.params.waveType = 0;
-			_synthC.params.waveType = 0;
 			_synthR.params.waveType = 0;
 			
-			_synthS.params = _synthC.params.clone();
+			_synthS.params = _synthL.params.clone();
 			
 			var width:int  = 640;
 			var height:int = 160;
@@ -193,34 +223,34 @@
 			var sweeperWidth:int = width - 8 - 104;
 			var offset:int = sweeperWidth / 4;
 			
-			var topRowY:int = height / 2 - 54 / 2 - 30;
+			var topRowY:int = height / 2 - 54 / 2 - 30 + 640;
 			
-			addButton("LOAD A",       clickLoadFactory(_synthL), width/2 - offset - 52, topRowY);
-			addButton("LOAD CURRENT", clickLoadFactory(_synthC), width/2          - 52, topRowY);
-			addButton("LOAD B",       clickLoadFactory(_synthR), width/2 + offset - 52, topRowY);
+			for (var y:int = 0; y < 3; ++y) {
+				for (var x:int = 0; x < 3; ++x) {
+					addIndividual((x+1) * width / 4 - 52, (y+1) * width / 4 - 52);
+				}
+			}
 			
-			_sweeper = new TinySlider(onSweeperChange, "", true, sweeperWidth, 54);
+			_sweeper = new TinySlider(onSweeperChange, "", false, sweeperWidth, 54);
 			_sweeper.x = (width - sweeperWidth) / 2;
-			_sweeper.y = height/2 - 54*0.5;
+			_sweeper.y = topRowY + 30;
 			addChild(_sweeper);
 			
 			//addButton("PLAY MIX",   clickPlayS,   320 - 52,  64);
 			
-			addButton("SAVE .SFS",   clickSaveS,   width/2 - offset - 52, height/2 + 54/2 + 12);
-			addButton("USE AS BASE", clickSelectS, width/2          - 52, height/2 + 54/2 + 12);
-			addButton("EXPORT .WAV", clickExportS, width/2 + offset - 52, height/2 + 54/2 + 12);
-			addSlider("", "masterVolume",         width/2 + offset - 50, height/2 + 54/2 +  7 + 30);
+			addButton("SELECT CHILD", clickSaveS, width/2 - 52, topRowY + 54 + 30 + 12);
+			addSlider("", "masterVolume",         width/2 + offset - 50, topRowY + 30 + 54 + 7 + 30);
 			
 			graphics.lineStyle(2, 0xFF0000, 1, true, LineScaleMode.NORMAL, CapsStyle.SQUARE, JointStyle.MITER);
-			graphics.drawRect(width/2-0.5 + offset + 50 - 42, height/2+54/2+7+30-0.5, 43, 10);
+			graphics.drawRect(width/2-0.5 + offset + 50 - 42, topRowY+54+30+7+30-0.5, 43, 10);
 			
 			stage.addEventListener(KeyboardEvent.KEY_DOWN, function(e:KeyboardEvent):void {
 				switch (e.keyCode) {
 					case Keyboard.LEFT:
-						_sweeper.value = Math.round((_sweeper.value - 0.05)*20) / 20;
+						_sweeper.value = Math.round((_sweeper.value - 0.1)*10) / 10;
 						break;
 					case Keyboard.RIGHT:
-						_sweeper.value = Math.round((_sweeper.value + 0.05)*20) / 20;
+						_sweeper.value = Math.round((_sweeper.value + 0.1)*10) / 10;
 						break;
 					case Keyboard.SPACE:
 					case Keyboard.UP:
@@ -239,12 +269,12 @@
 			
 			var lines:Vector.<IGraphicsData> = new Vector.<IGraphicsData>();
 			lines.push(new GraphicsStroke(1, false, LineScaleMode.NORMAL, CapsStyle.NONE, JointStyle.MITER, 3, new GraphicsSolidFill(0)));
+			lines.push(new GraphicsPath(Vector.<int>([1,2]), 
+										Vector.<Number>([0, 640, width, 640])));
 			lines.push(new GraphicsPath(Vector.<int>([1,2,2]), 
 										Vector.<Number>([left,  _sweeper.y, left,  topRowY + 9, width/2 - offset, topRowY + 9])));
 			lines.push(new GraphicsPath(Vector.<int>([1,2,2]), 
 										Vector.<Number>([right, _sweeper.y, right, topRowY + 9, width / 2 + offset, topRowY + 9])));
-			lines.push(new GraphicsPath(Vector.<int>([1,2]),
-										Vector.<Number>([center, _sweeper.y, center, topRowY + 9])));
 			graphics.drawGraphicsData(lines);
 		}
 		
@@ -280,11 +310,6 @@
 			};
 			
 			return click;
-		}
-		
-		private function clickLoadC(button:TinyButton):void
-		{
-			_synthC.play();
 		}
 		
 		private function clickLoadR(button:TinyButton):void
@@ -372,11 +397,7 @@
 		 */
 		private function onSweeperChange(sweeper:TinySlider):void
 		{
-			if (sweeper.value >= 0) {
-				interpolate(_synthS, _synthC, _synthR, Math.abs(sweeper.value));
-			} else {
-				interpolate(_synthS, _synthC, _synthL, Math.abs(sweeper.value));
-			}
+			interpolate(_synthS, _synthL, _synthR, sweeper.value);
 			
 			_synthS.play();
 			
@@ -394,9 +415,9 @@
 		 * @param	selectable		If the button is selectable
 		 * @param	selected		If the button starts as selected
 		 */
-		private function addButton(label:String, onClick:Function, x:Number, y:Number, border:Number = 1, selectable:Boolean = false):TinyButton
+		private function addButton(label:String, onClick:Function, x:Number, y:Number, selectable:Boolean = false, width:int = 104):TinyButton
 		{
-			var button:TinyButton = new TinyButton(onClick, label, border, selectable);
+			var button:TinyButton = new TinyButton(onClick, label, 1, selectable, width);
 			button.x = x;
 			button.y = y;
 			addChild(button);

@@ -17,6 +17,30 @@
 	/**
 	 * TinyButton
 	 * 
+	 * Copyright 2013 Mark Wonnacott
+	 *
+	 * This derivative work is a modification of the original file whose
+	 * copyright and attribution is available below.
+	 * 
+	 * Licensed under the Apache License, Version 2.0 (the "License");
+	 * you may not use this file except in compliance with the License.
+	 * You may obtain a copy of the License at
+	 *
+	 * 	http://www.apache.org/licenses/LICENSE-2.0
+	 *
+	 * Unless required by applicable law or agreed to in writing, software
+	 * distributed under the License is distributed on an "AS IS" BASIS,
+	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	 * See the License for the specific language governing permissions and
+	 * limitations under the License.
+	 * 
+	 * @author Mark Wonnacott
+	 */
+	
+	// ORIGINAL COPYRIGHT NOTICE & ATTRIBUTION
+	/**
+	 * TinyButton
+	 * 
 	 * Copyright 2010 Thomas Vian
 	 *
 	 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,6 +76,8 @@
 		protected var _text:TextField;					// Label TextField (left aligned)
 		
 		protected var _rect:Rectangle;					// Bounds of the button in the context of the stage
+		
+		protected var _width:int;                       // Button width in pixels
 		
 		protected var _selected:Boolean;				// If the button is selected (only used for wave selection)
 		protected var _selectable:Boolean;				// If the button is selectable (only used for wave selection)
@@ -112,8 +138,9 @@
 		 * @param	border			Thickness of the border in pixels
 		 * @param	selectable		If the button should be selectable
 		 */
-		public function TinyButton(onClick:Function, label:String, border:Number = 2, selectable:Boolean = false):void 
+		public function TinyButton(onClick:Function, label:String, border:Number = 2, selectable:Boolean = false, width:int = 104):void 
 		{
+			_width = width;
 			_onClick = onClick;
 			
 			_selectable = selectable;
@@ -225,7 +252,7 @@
 			var rect:Shape = new Shape();
 			rect.graphics.lineStyle(border, borderColour, 1, true, LineScaleMode.NORMAL, CapsStyle.SQUARE, JointStyle.MITER);
 			rect.graphics.beginFill(fillColour, 1);
-			rect.graphics.drawRect(0, 0, 104, 18);
+			rect.graphics.drawRect(0, 0, _width, 18);
 			rect.graphics.endFill();
 			return rect;
 		}

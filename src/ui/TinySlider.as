@@ -15,7 +15,7 @@
 	import flash.text.TextFormatAlign;
 	
 	/**
-	 * SfxrApp
+	 * TinySlider
 	 * 
 	 * Copyright 2013 Mark Wonnacott
 	 *
