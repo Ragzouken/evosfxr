@@ -34,7 +34,8 @@
 	import ui.TinyButton;
 	import ui.TinyCheckbox;
 	import ui.TinySlider;
-	
+	import ui.Individual;
+
 	/**
 	 * SfxrApp
 	 * 
@@ -77,7 +78,7 @@
 	 * limitations under the License.
 	 */
 	
-	[SWF(width='640', height='800', backgroundColor='#C0B090', frameRate='25')]
+	[SWF(width='640', height='527', backgroundColor='#C0B090', frameRate='25')]
 	public class SfxrApp extends Sprite
 	{
 		//--------------------------------------------------------------------------
@@ -118,7 +119,12 @@
 		private var _synthR:SfxrSynth;
 		private var _synthS:SfxrSynth;
 		
+		private var _individuals:Vector.<Individual>;
+		private var _confirmSelection:TinyButton;
 		private var _sweeper:TinySlider;
+		private var _confirmCrossover:TinyButton;
+		
+		private var _selected:Vector.<SfxrParams>;
 		
 		//--------------------------------------------------------------------------
 		//	
@@ -165,39 +171,6 @@
 		}
 		
 		//--------------------------------------------------------------------------
-		//
-		//  Individuals
-		//
-		//--------------------------------------------------------------------------
-		
-		private function addIndividual(x:int, y:int):void
-		{
-			var synth:SfxrSynth = new SfxrSynth();
-			
-			synth.params.randomize();
-			synth.params.waveType = 0;
-			
-			var play:Function = function():void {
-				synth.play();
-			}
-			
-			var save:Function = function():void {
-				var file:ByteArray = getSettingsFile(synth);
-				new FileReference().save(file, "sfx.sfs");
-			}
-			
-			var export:Function = function():void {
-				var file:ByteArray = _synthS.getWavFile(_sampleRate, _bitDepth);
-				new FileReference().save(file, "sfx.wav");
-			}
-			
-			addButton("PLAY",   play,   x,      y);
-			addButton("SELECT", null,   x,      y + 25, true);
-			addButton(".SFS",   save,   x,      y + 50, false, 48);
-			addButton(".WAV",   export, x + 56, y + 50, false, 48);
-		}
-		
-		//--------------------------------------------------------------------------
 		//	
 		//  Button Methods
 		//
@@ -221,30 +194,51 @@
 			var height:int = 160;
 			
 			var sweeperWidth:int = width - 8 - 104;
-			var offset:int = sweeperWidth / 4;
 			
-			var topRowY:int = height / 2 - 54 / 2 - 30 + 640;
+			var topRowY:int = 23 + 320;
+			var spacing:int = (sweeperWidth - 110 * 4) / 3 + 110;
+			var offset:int = (width - sweeperWidth) / 2;
 			
-			for (var y:int = 0; y < 3; ++y) {
-				for (var x:int = 0; x < 3; ++x) {
-					addIndividual((x+1) * width / 4 - 52, (y+1) * width / 4 - 52);
+			_individuals = new Vector.<Individual>();
+			
+			for (var y:int = 0; y < 2; ++y) {
+				for (var x:int = 0; x < 4; ++x) {
+					var individual:Individual = new Individual(this, x * spacing + offset, y * spacing + offset);
+					_individuals.push(individual);
+					addChild(individual);
 				}
 			}
 			
+			_confirmSelection = addButton("CONFIRM", selectionConfirmed, width/2 - 52, spacing + offset + 110 + 18);
+			
+			var divide:int = spacing + 110 + offset * 2;
+			
+			var lines:Vector.<IGraphicsData> = new Vector.<IGraphicsData>();
+			lines.push(new GraphicsStroke(1, false, LineScaleMode.NORMAL, CapsStyle.NONE, JointStyle.MITER, 3, new GraphicsSolidFill(0)));
+			lines.push(new GraphicsPath(Vector.<int>([1,2]), 
+										Vector.<Number>([0, divide, width, divide])));
+			graphics.drawGraphicsData(lines);
+			
 			_sweeper = new TinySlider(onSweeperChange, "", false, sweeperWidth, 54);
 			_sweeper.x = (width - sweeperWidth) / 2;
-			_sweeper.y = topRowY + 30;
+			_sweeper.y = divide + (width - sweeperWidth) / 2;
 			addChild(_sweeper);
+			_sweeper.enabled = false;
 			
-			//addButton("PLAY MIX",   clickPlayS,   320 - 52,  64);
+			_confirmCrossover = addButton("SELECT CHILD", childSelected, width/2 - 52, divide + (width - sweeperWidth) / 2 + 54 + 19);
+			_confirmCrossover.enabled = false;
 			
-			addButton("SELECT CHILD", clickSaveS, width/2 - 52, topRowY + 54 + 30 + 12);
-			addSlider("", "masterVolume",         width/2 + offset - 50, topRowY + 30 + 54 + 7 + 30);
+			addSlider("", "masterVolume", width/2 + offset - 50, topRowY + 30 + 54 + 7 + 30);
 			
 			graphics.lineStyle(2, 0xFF0000, 1, true, LineScaleMode.NORMAL, CapsStyle.SQUARE, JointStyle.MITER);
 			graphics.drawRect(width/2-0.5 + offset + 50 - 42, topRowY+54+30+7+30-0.5, 43, 10);
 			
+			addLabel("SELECTION",        offset,      0, 0x504030);
+			addLabel("MANUAL CROSSOVER", offset, divide, 0x504030);
+			
 			stage.addEventListener(KeyboardEvent.KEY_DOWN, function(e:KeyboardEvent):void {
+				if (!_confirmCrossover.enabled) { return; }
+				
 				switch (e.keyCode) {
 					case Keyboard.LEFT:
 						_sweeper.value = Math.round((_sweeper.value - 0.1)*10) / 10;
@@ -262,20 +256,53 @@
 						break;
 				}
 			});
+		}
+		
+		private function childSelected(button:TinyButton):void
+		{
+			switchToSelection();
+		}
+		
+		private function selectionConfirmed(button:TinyButton):void
+		{
+			var selected:int;
 			
-			var left:int = _sweeper.x;
-			var right:int = _sweeper.x + _sweeper.width - 1;
-			var center:int = width/2;
+			for each (var individual:Individual in _individuals) {
+				if (individual.selected) {
+					++selected;
+					
+					_selected.push(individual.params);
+				}
+			}
 			
-			var lines:Vector.<IGraphicsData> = new Vector.<IGraphicsData>();
-			lines.push(new GraphicsStroke(1, false, LineScaleMode.NORMAL, CapsStyle.NONE, JointStyle.MITER, 3, new GraphicsSolidFill(0)));
-			lines.push(new GraphicsPath(Vector.<int>([1,2]), 
-										Vector.<Number>([0, 640, width, 640])));
-			lines.push(new GraphicsPath(Vector.<int>([1,2,2]), 
-										Vector.<Number>([left,  _sweeper.y, left,  topRowY + 9, width/2 - offset, topRowY + 9])));
-			lines.push(new GraphicsPath(Vector.<int>([1,2,2]), 
-										Vector.<Number>([right, _sweeper.y, right, topRowY + 9, width / 2 + offset, topRowY + 9])));
-			graphics.drawGraphicsData(lines);
+			trace(selected);
+			
+			switchToCrossover();
+		}
+		
+		private function switchToCrossover():void
+		{
+			for each (var individual:Individual in _individuals) {
+				individual.enabled = false;
+			}
+			
+			_confirmSelection.enabled = false;
+			
+			_sweeper.enabled = true;
+			_sweeper.value = 0.5;
+			_confirmCrossover.enabled = true;
+		}
+		
+		private function switchToSelection():void
+		{
+			for each (var individual:Individual in _individuals) {
+				individual.enabled = true;
+			}
+			
+			_confirmSelection.enabled = true;
+			
+			_sweeper.enabled = false;
+			_confirmCrossover.enabled = false;
 		}
 		
 		private function clickLoadFactory(synth:SfxrSynth):Function
@@ -415,9 +442,9 @@
 		 * @param	selectable		If the button is selectable
 		 * @param	selected		If the button starts as selected
 		 */
-		private function addButton(label:String, onClick:Function, x:Number, y:Number, selectable:Boolean = false, width:int = 104):TinyButton
+		private function addButton(label:String, onClick:Function, x:Number, y:Number, selectable:Boolean = false, width:int = 104, height:int = 18):TinyButton
 		{
-			var button:TinyButton = new TinyButton(onClick, label, 1, selectable, width);
+			var button:TinyButton = new TinyButton(onClick, label, 1, selectable, width, height);
 			button.x = x;
 			button.y = y;
 			addChild(button);

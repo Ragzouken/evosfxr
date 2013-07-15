@@ -87,6 +87,9 @@
 		protected var _width:int;                   // Width of bar in pixels
 		protected var _height:int;					// Height of bar in pixels
 		
+		protected var _quantization:int;            // How many discrete values to allow
+		protected var _enabled:Boolean;
+		
 		//--------------------------------------------------------------------------
 		//	
 		// Getters / Setters
@@ -107,6 +110,10 @@
 			else if (!_plusMinus && v < 0.0) 	v = 0.0;
 			else if (v > 1.0) 					v = 1.0;
 
+			if (_quantization != 0) {
+				v = Math.round(v * (_quantization - 1)) / (_quantization - 1);
+			}
+			
 			_bar.scaleX = _plusMinus ? v * 0.5 : v;
 			_bar.x = _plusMinus ? _width / 2 : 0;
 			
@@ -116,6 +123,15 @@
 			}
 			
 			_onChange(this);
+		}
+		
+		public function get enabled():Boolean {return _enabled;}
+		public function set enabled(value:Boolean):void
+		{
+			if(value) 	alpha = 1.0;
+			else		alpha = 0.3;
+			
+			_enabled = value;
 		}
 		
 		//--------------------------------------------------------------------------
@@ -130,7 +146,8 @@
 		 * @param	label			Label to display to the left of the slider
 		 * @param	plusMinus		If the slider ranges from -1 to 1, instead of 0 to 1
 		 */
-		public function TinySlider(onChange:Function, label:String = "", plusMinus:Boolean = false, width:int = 100, height:int = 9)
+		public function TinySlider(onChange:Function, label:String = "", plusMinus:Boolean = false, width:int = 100, height:int = 9, quantization:int = 0
+		)
 		{
 			_onChange = onChange;
 			_plusMinus = plusMinus;
@@ -138,6 +155,8 @@
 		
 			_width = width;
 			_height = height;
+			
+			_quantization = quantization;
 			
 			_defaultValue = 0.0;
 			
@@ -212,8 +231,10 @@
 		{
 			if (_rect.contains(stage.mouseX, stage.mouseY))
 			{
-				updateValue();
-				
+				if (_enabled) {
+					updateValue();
+				}
+					
 				stage.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
 				stage.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
 			}
@@ -229,8 +250,10 @@
 		 */
 		protected function onMouseMove(e:MouseEvent):void
 		{
-			updateValue();
-			
+			if (_enabled) {
+				updateValue();
+			}
+				
 			e.updateAfterEvent();
 		}
 		

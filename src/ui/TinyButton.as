@@ -78,6 +78,7 @@
 		protected var _rect:Rectangle;					// Bounds of the button in the context of the stage
 		
 		protected var _width:int;                       // Button width in pixels
+		protected var _height:int;                      // Button height in pixels
 		
 		protected var _selected:Boolean;				// If the button is selected (only used for wave selection)
 		protected var _selectable:Boolean;				// If the button is selectable (only used for wave selection)
@@ -116,6 +117,7 @@
 		}
 		
 		/** Enables/disables the button */
+		public function get enabled():Boolean { return _enabled; }
 		public function set enabled(value:Boolean):void
 		{
 			if(value) 	alpha = 1.0;
@@ -138,9 +140,10 @@
 		 * @param	border			Thickness of the border in pixels
 		 * @param	selectable		If the button should be selectable
 		 */
-		public function TinyButton(onClick:Function, label:String, border:Number = 2, selectable:Boolean = false, width:int = 104):void 
+		public function TinyButton(onClick:Function, label:String, border:Number = 2, selectable:Boolean = false, width:int = 104, height:int = 18):void 
 		{
 			_width = width;
+			_height = height;
 			_onClick = onClick;
 			
 			_selectable = selectable;
@@ -161,8 +164,8 @@
 			_text.selectable = false;
 			_text.embedFonts = true;
 			_text.text = label;
-			_text.width = 104;
-			_text.height = 16;
+			_text.width = width;
+			_text.height = height;
 			_text.x = _text.y = 2;
 			
 			addChild(_backOff);
@@ -252,7 +255,7 @@
 			var rect:Shape = new Shape();
 			rect.graphics.lineStyle(border, borderColour, 1, true, LineScaleMode.NORMAL, CapsStyle.SQUARE, JointStyle.MITER);
 			rect.graphics.beginFill(fillColour, 1);
-			rect.graphics.drawRect(0, 0, _width, 18);
+			rect.graphics.drawRect(0, 0, _width, _height);
 			rect.graphics.endFill();
 			return rect;
 		}
