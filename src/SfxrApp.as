@@ -125,6 +125,8 @@
 		private var _confirmCrossover:TinyButton;
 		
 		private var _selected:Vector.<SfxrParams>;
+		private var _crossover:Vector.<SfxrParams>;
+		private var _recombined:Vector.<SfxrParams>;
 		
 		//--------------------------------------------------------------------------
 		//	
@@ -190,6 +192,10 @@
 			
 			_synthS.params = _synthL.params.clone();
 			
+			_selected = new Vector.<SfxrParams>();
+			_crossover = new Vector.<SfxrParams>();
+			_recombined = new Vector.<SfxrParams>();
+			
 			var width:int  = 640;
 			var height:int = 160;
 			
@@ -228,10 +234,9 @@
 			_confirmCrossover = addButton("SELECT CHILD", childSelected, width/2 - 52, divide + (width - sweeperWidth) / 2 + 54 + 19);
 			_confirmCrossover.enabled = false;
 			
-			addSlider("", "masterVolume", width/2 + offset - 50, topRowY + 30 + 54 + 7 + 30);
-			
-			graphics.lineStyle(2, 0xFF0000, 1, true, LineScaleMode.NORMAL, CapsStyle.SQUARE, JointStyle.MITER);
-			graphics.drawRect(width/2-0.5 + offset + 50 - 42, topRowY+54+30+7+30-0.5, 43, 10);
+			//addSlider("", "masterVolume", width/2 + offset - 50, topRowY + 30 + 54 + 7 + 30);
+			//graphics.lineStyle(2, 0xFF0000, 1, true, LineScaleMode.NORMAL, CapsStyle.SQUARE, JointStyle.MITER);
+			//graphics.drawRect(width/2-0.5 + offset + 50 - 42, topRowY+54+30+7+30-0.5, 43, 10);
 			
 			addLabel("SELECTION",        offset,      0, 0x504030);
 			addLabel("MANUAL CROSSOVER", offset, divide, 0x504030);
@@ -252,7 +257,7 @@
 						break;
 					case Keyboard.ENTER:
 					case Keyboard.DOWN:
-						clickSelectS(null);
+						childSelected(null);
 						break;
 				}
 			});
@@ -260,28 +265,55 @@
 		
 		private function childSelected(button:TinyButton):void
 		{
-			switchToSelection();
+			_recombined.push(_synthS.params.clone());
+			
+			if (_crossover.length > 0) {
+				switchToCrossover();
+			} else {
+				switchToSelection();
+			}
 		}
 		
 		private function selectionConfirmed(button:TinyButton):void
 		{
-			var selected:int;
-			
 			for each (var individual:Individual in _individuals) {
 				if (individual.selected) {
-					++selected;
-					
 					_selected.push(individual.params);
 				}
 			}
 			
-			trace(selected);
+			for each (var parent:SfxrParams in _selected) {
+				if (_selected.length > 1) {
+					var mate:SfxrParams = parent;
+				
+					while (mate === parent) {
+						mate = _selected[Math.floor(_selected.length * Math.random())];
+					}
+					
+					_crossover.push(parent);
+					_crossover.push(mate);
+				}
+			}
 			
+			for (var i:int = 0; i < 8 - _selected.length; ++i) {
+				var parent:SfxrParams = _selected[Math.floor(_selected.length * Math.random())];
+				
+				parent = parent.clone();
+				parent.randomize();
+				parent.waveType = 0;
+				
+				_recombined.push(parent);
+			}
+			
+			// switch to cross over to perform remaining crossover
 			switchToCrossover();
 		}
 		
 		private function switchToCrossover():void
 		{
+			_synthL.params = _crossover.pop();
+			_synthR.params = _crossover.pop();
+			
 			for each (var individual:Individual in _individuals) {
 				individual.enabled = false;
 			}
@@ -295,6 +327,10 @@
 		
 		private function switchToSelection():void
 		{
+			for (var i:int = 0; i < 8; ++i) {
+				_individuals[i].params = _recombined[i];
+			}
+			
 			for each (var individual:Individual in _individuals) {
 				individual.enabled = true;
 			}
