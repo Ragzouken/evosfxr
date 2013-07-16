@@ -276,37 +276,64 @@
 		
 		private function selectionConfirmed(button:TinyButton):void
 		{
+			_crossover.length = 0;
+			_recombined.length = 0;
+			
 			for each (var individual:Individual in _individuals) {
 				if (individual.selected) {
 					_selected.push(individual.params);
 				}
 			}
 			
+			var pairings:Dictionary = new Dictionary();
+		
 			for each (var parent:SfxrParams in _selected) {
-				if (_selected.length > 1) {
+				pairings[parent] = new Vector.<SfxrParams>();
+			}
+			
+			for each (var parent:SfxrParams in _selected) {
+				if (_selected.length > pairings[parent].length + 1) {
 					var mate:SfxrParams = parent;
-				
-					while (mate === parent) {
+					
+					while (mate === parent || pairings[mate].indexOf(parent) >= 0) {
 						mate = _selected[Math.floor(_selected.length * Math.random())];
 					}
+					
+					pairings[parent].push(mate);
+					pairings[mate].push(parent);
 					
 					_crossover.push(parent);
 					_crossover.push(mate);
 				}
 			}
 			
-			for (var i:int = 0; i < 8 - _selected.length; ++i) {
-				var parent:SfxrParams = _selected[Math.floor(_selected.length * Math.random())];
-				
-				parent = parent.clone();
-				parent.randomize();
-				parent.waveType = 0;
-				
-				_recombined.push(parent);
+			for (var i:int = 0; i < 8 - _crossover.length / 2; ++i) {
+				if (_selected.length > 0) {
+					var parent:SfxrParams = _selected[Math.floor(_selected.length * Math.random())];
+					
+					parent = parent.clone();
+					parent.mutate(0.75 / _selected.length);
+					parent.waveType = 0;
+					
+					_recombined.push(parent);
+				} else {
+					var random:SfxrParams = new SfxrParams();
+					random.randomize();
+					random.waveType = 0;
+					_recombined.push(random);
+				}
 			}
 			
+			trace(_recombined.length);
+			
 			// switch to cross over to perform remaining crossover
-			switchToCrossover();
+			if (_selected.length > 0) {
+				_selected.length = 0;
+				switchToCrossover();
+			} else {
+				_selected.length = 0;
+				switchToSelection();
+			}
 		}
 		
 		private function switchToCrossover():void
@@ -330,6 +357,8 @@
 			for (var i:int = 0; i < 8; ++i) {
 				_individuals[i].params = _recombined[i];
 			}
+			
+			_recombined.length = 0;
 			
 			for each (var individual:Individual in _individuals) {
 				individual.enabled = true;
