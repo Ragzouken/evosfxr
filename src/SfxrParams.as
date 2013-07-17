@@ -463,23 +463,23 @@ package
 			_slide =  			pow(Math.random()*2-1, 5);
 			_deltaSlide =  		pow(Math.random()*2-1, 3);
 			
-			_vibratoDepth =  	pow(Math.random()*2-1, 3);
-			_vibratoSpeed =  	Math.random()*2-1;
+			_vibratoDepth =  	pow(Math.random(), 3);
+			_vibratoSpeed =  	Math.random();
 			
 			_changeAmount =  	Math.random()*2-1;
-			_changeSpeed =  	Math.random()*2-1;
+			_changeSpeed =  	Math.random();
 			
-			_squareDuty =  		Math.random()*2-1;
+			_squareDuty =  		Math.random();
 			_dutySweep =  		pow(Math.random()*2-1, 3);
 			
-			_repeatSpeed =  	Math.random()*2-1;
+			_repeatSpeed =  	Math.random();
 			
 			_phaserOffset =  	pow(Math.random()*2-1, 3);
 			_phaserSweep =  	pow(Math.random()*2-1, 3);
 			
 			_lpFilterCutoff =  		1 - pow(Math.random(), 3);
 			_lpFilterCutoffSweep = 	pow(Math.random()*2-1, 3);
-			_lpFilterResonance =  	Math.random()*2-1;
+			_lpFilterResonance =  	Math.random();
 			
 			_hpFilterCutoff =  		pow(Math.random(), 5);
 			_hpFilterCutoffSweep = 	pow(Math.random()*2-1, 5);

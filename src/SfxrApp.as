@@ -35,6 +35,7 @@
 	import ui.TinyCheckbox;
 	import ui.TinySlider;
 	import ui.Individual;
+	import ui.Visualisation;
 
 	/**
 	 * SfxrApp
@@ -127,6 +128,8 @@
 		private var _selected:Vector.<SfxrParams>;
 		private var _crossover:Vector.<SfxrParams>;
 		private var _recombined:Vector.<SfxrParams>;
+		
+		private var _sweepVis:Visualisation;
 		
 		//--------------------------------------------------------------------------
 		//	
@@ -231,6 +234,10 @@
 			addChild(_sweeper);
 			_sweeper.enabled = false;
 			
+			_sweepVis = new Visualisation(_sweeper.x + sweeperWidth / 2, _sweeper.y + 54/2, _synthS.params);
+			addChild(_sweepVis);
+			_sweepVis.enabled = false;
+			
 			_confirmCrossover = addButton("SELECT CHILD", childSelected, width/2 - 52, divide + (width - sweeperWidth) / 2 + 54 + 19);
 			_confirmCrossover.enabled = false;
 			
@@ -253,7 +260,7 @@
 						break;
 					case Keyboard.SPACE:
 					case Keyboard.UP:
-						clickPlayS(null);
+						_synthS.play();
 						break;
 					case Keyboard.ENTER:
 					case Keyboard.DOWN:
@@ -302,8 +309,8 @@
 					pairings[parent].push(mate);
 					pairings[mate].push(parent);
 					
-					_crossover.push(parent);
-					_crossover.push(mate);
+					_crossover.push(parent.clone());
+					_crossover.push(mate.clone());
 				}
 			}
 			
@@ -314,12 +321,14 @@
 					parent = parent.clone();
 					parent.mutate(0.75 / _selected.length);
 					parent.waveType = 0;
+					//parent.masterVolume = 0.5;
 					
 					_recombined.push(parent);
 				} else {
 					var random:SfxrParams = new SfxrParams();
 					random.randomize();
 					random.waveType = 0;
+					//random.masterVolume = 0.5;
 					_recombined.push(random);
 				}
 			}
@@ -347,6 +356,7 @@
 			
 			_sweeper.enabled = true;
 			_sweeper.value = 0.5;
+			_sweepVis.enabled = true;
 			_confirmCrossover.enabled = true;
 		}
 		
@@ -365,6 +375,7 @@
 			_confirmSelection.enabled = true;
 			
 			_sweeper.enabled = false;
+			_sweepVis.enabled = false;
 			_confirmCrossover.enabled = false;
 		}
 		
@@ -402,120 +413,83 @@
 			return click;
 		}
 		
-		private function clickLoadR(button:TinyButton):void
-		{
-			_synthR.play();
-		}
-		
-		private function clickPlayS(button:TinyButton):void
-		{
-			_synthS.play();
-		}
-		
-		private function clickSelectS(button:TinyButton):void
-		{
-			_synthC.params = _synthS.params.clone();
-			
-			_synthL.params.randomize();
-			_synthR.params.randomize();
-			
-			_synthL.params.waveType = 0;
-			_synthR.params.waveType = 0;
-			
-			_sweeper.value = 0;
-		}
-		
-		private function clickSaveS(button:TinyButton):void
-		{
-			var file:ByteArray = getSettingsFile(_synthS);
-			
-			new FileReference().save(file, "sfx.sfs");
-		}
-		
-		private function clickExportS(button:TinyButton):void
-		{
-			var file:ByteArray = _synthS.getWavFile(_sampleRate, _bitDepth);
-			
-			new FileReference().save(file, "sfx.wav");
-		}
-		
 		private function mix(left:Number, right:Number, u:Number):Number
 		{
 			return left * (1 - u) + right * u;
 		}
 		
-		private function interpolate(child:SfxrSynth, left:SfxrSynth, right:SfxrSynth, u:Number):void
+		private function interpolate(child:SfxrParams, left:SfxrParams, right:SfxrParams, u:Number):void
 		{
-			//child.params.masterVolume = _synth.params.masterVolume; //mix(left.params.masterVolume, right.params.masterVolume, u);
+			child.masterVolume = mix(left.masterVolume, right.masterVolume, u);
 			
-			child.params.attackTime   = mix(left.params.attackTime,   right.params.attackTime,   u);
-			child.params.sustainTime  = mix(left.params.sustainTime,  right.params.sustainTime,  u);
-			child.params.sustainPunch = mix(left.params.sustainPunch, right.params.sustainPunch, u);
-			child.params.decayTime    = mix(left.params.decayTime,    right.params.decayTime,    u);
+			child.attackTime   = mix(left.attackTime,   right.attackTime,   u);
+			child.sustainTime  = mix(left.sustainTime,  right.sustainTime,  u);
+			child.sustainPunch = mix(left.sustainPunch, right.sustainPunch, u);
+			child.decayTime    = mix(left.decayTime,    right.decayTime,    u);
 			
-			child.params.startFrequency = mix(left.params.startFrequency, right.params.startFrequency, u);
-			child.params.minFrequency   = mix(left.params.minFrequency,   right.params.minFrequency,   u);
+			child.startFrequency = mix(left.startFrequency, right.startFrequency, u);
+			child.minFrequency   = mix(left.minFrequency,   right.minFrequency,   u);
 			
-			child.params.slide      = mix(left.params.slide,      right.params.slide,      u);
-			child.params.deltaSlide = mix(left.params.deltaSlide, right.params.deltaSlide, u);
+			child.slide      = mix(left.slide,      right.slide,      u);
+			child.deltaSlide = mix(left.deltaSlide, right.deltaSlide, u);
 			
-			child.params.vibratoDepth = mix(left.params.vibratoDepth, right.params.vibratoDepth, u);
-			child.params.vibratoSpeed = mix(left.params.vibratoSpeed, right.params.vibratoSpeed, u);
+			child.vibratoDepth = mix(left.vibratoDepth, right.vibratoDepth, u);
+			child.vibratoSpeed = mix(left.vibratoSpeed, right.vibratoSpeed, u);
 			
-			child.params.changeAmount = mix(left.params.changeAmount, right.params.changeAmount, u);
-			child.params.changeSpeed  = mix(left.params.changeSpeed,  right.params.changeSpeed,  u);
+			child.changeAmount = mix(left.changeAmount, right.changeAmount, u);
+			child.changeSpeed  = mix(left.changeSpeed,  right.changeSpeed,  u);
 			
-			child.params.squareDuty = mix(left.params.squareDuty, right.params.squareDuty, u);
-			child.params.dutySweep  = mix(left.params.dutySweep,  right.params.dutySweep,  u);
+			child.squareDuty = mix(left.squareDuty, right.squareDuty, u);
+			child.dutySweep  = mix(left.dutySweep,  right.dutySweep,  u);
 			
-			child.params.repeatSpeed = mix(left.params.repeatSpeed, right.params.repeatSpeed, u);
+			child.repeatSpeed = mix(left.repeatSpeed, right.repeatSpeed, u);
 			
-			child.params.phaserOffset = mix(left.params.phaserOffset, right.params.phaserOffset, u);
-			child.params.phaserSweep  = mix(left.params.phaserSweep,  right.params.phaserSweep,  u);
+			child.phaserOffset = mix(left.phaserOffset, right.phaserOffset, u);
+			child.phaserSweep  = mix(left.phaserSweep,  right.phaserSweep,  u);
 			
-			child.params.lpFilterCutoff      = mix(left.params.lpFilterCutoff,      right.params.lpFilterCutoff,      u);
-			child.params.lpFilterCutoffSweep = mix(left.params.lpFilterCutoffSweep, right.params.lpFilterCutoffSweep, u);
-			child.params.lpFilterResonance   = mix(left.params.lpFilterResonance,   right.params.lpFilterResonance,   u);
+			child.lpFilterCutoff      = mix(left.lpFilterCutoff,      right.lpFilterCutoff,      u);
+			child.lpFilterCutoffSweep = mix(left.lpFilterCutoffSweep, right.lpFilterCutoffSweep, u);
+			child.lpFilterResonance   = mix(left.lpFilterResonance,   right.lpFilterResonance,   u);
 			
-			child.params.hpFilterCutoff      = mix(left.params.hpFilterCutoff,      right.params.hpFilterCutoff,      u);
-			child.params.hpFilterCutoffSweep = mix(left.params.hpFilterCutoffSweep, right.params.hpFilterCutoffSweep, u);
+			child.hpFilterCutoff      = mix(left.hpFilterCutoff,      right.hpFilterCutoff,      u);
+			child.hpFilterCutoffSweep = mix(left.hpFilterCutoffSweep, right.hpFilterCutoffSweep, u);
 		}
 		
-		private function cross(child:SfxrSynth, left:SfxrSynth, right:SfxrSynth, u:Vector.<Number>):void
+		private function cross(child:SfxrParams, left:SfxrParams, right:SfxrParams, u:Vector.<Number>):void
 		{
-			//child.params.masterVolume = _synth.params.masterVolume; //mix(left.params.masterVolume, right.params.masterVolume, u);
+			//child.masterVolume = _synth.params.masterVolume; //mix(left.masterVolume, right.masterVolume, u);
 			
-			child.params.attackTime   = mix(left.params.attackTime,   right.params.attackTime,   u[0]);
-			child.params.sustainTime  = mix(left.params.sustainTime,  right.params.sustainTime,  u[1]);
-			child.params.sustainPunch = mix(left.params.sustainPunch, right.params.sustainPunch, u[2]);
-			child.params.decayTime    = mix(left.params.decayTime,    right.params.decayTime,    u[3]);
+			child.attackTime   = mix(left.attackTime,   right.attackTime,   u[0]);
+			child.sustainTime  = mix(left.sustainTime,  right.sustainTime,  u[1]);
+			child.sustainPunch = mix(left.sustainPunch, right.sustainPunch, u[2]);
+			child.decayTime    = mix(left.decayTime,    right.decayTime,    u[3]);
 			
-			child.params.startFrequency = mix(left.params.startFrequency, right.params.startFrequency, u[4]);
-			child.params.minFrequency   = mix(left.params.minFrequency,   right.params.minFrequency,   u[5]);
+			child.startFrequency = mix(left.startFrequency, right.startFrequency, u[4]);
+			child.minFrequency   = mix(left.minFrequency,   right.minFrequency,   u[5]);
 			
-			child.params.slide      = mix(left.params.slide,      right.params.slide,      u[6]);
-			child.params.deltaSlide = mix(left.params.deltaSlide, right.params.deltaSlide, u[7]);
+			child.slide      = mix(left.slide,      right.slide,      u[6]);
+			child.deltaSlide = mix(left.deltaSlide, right.deltaSlide, u[7]);
 			
-			child.params.vibratoDepth = mix(left.params.vibratoDepth, right.params.vibratoDepth, u[8]);
-			child.params.vibratoSpeed = mix(left.params.vibratoSpeed, right.params.vibratoSpeed, u[9]);
+			child.vibratoDepth = mix(left.vibratoDepth, right.vibratoDepth, u[8]);
+			child.vibratoSpeed = mix(left.vibratoSpeed, right.vibratoSpeed, u[9]);
 			
-			child.params.changeAmount = mix(left.params.changeAmount, right.params.changeAmount, u[10]);
-			child.params.changeSpeed  = mix(left.params.changeSpeed,  right.params.changeSpeed,  u[11]);
+			child.changeAmount = mix(left.changeAmount, right.changeAmount, u[10]);
+			child.changeSpeed  = mix(left.changeSpeed,  right.changeSpeed,  u[11]);
 			
-			child.params.squareDuty = mix(left.params.squareDuty, right.params.squareDuty, u[12]);
-			child.params.dutySweep  = mix(left.params.dutySweep,  right.params.dutySweep,  u[13]);
+			child.squareDuty = mix(left.squareDuty, right.squareDuty, u[12]);
+			child.dutySweep  = mix(left.dutySweep,  right.dutySweep,  u[13]);
 			
-			child.params.repeatSpeed = mix(left.params.repeatSpeed, right.params.repeatSpeed, u[14]);
+			child.repeatSpeed = mix(left.repeatSpeed, right.repeatSpeed, u[14]);
 			
-			child.params.phaserOffset = mix(left.params.phaserOffset, right.params.phaserOffset, u[15]);
-			child.params.phaserSweep  = mix(left.params.phaserSweep,  right.params.phaserSweep,  u[16]);
+			child.phaserOffset = mix(left.phaserOffset, right.phaserOffset, u[15]);
+			child.phaserSweep  = mix(left.phaserSweep,  right.phaserSweep,  u[16]);
 			
-			child.params.lpFilterCutoff      = mix(left.params.lpFilterCutoff,      right.params.lpFilterCutoff,      u[17]);
-			child.params.lpFilterCutoffSweep = mix(left.params.lpFilterCutoffSweep, right.params.lpFilterCutoffSweep, u[18]);
-			child.params.lpFilterResonance   = mix(left.params.lpFilterResonance,   right.params.lpFilterResonance,   u[19]);
+			child.lpFilterCutoff      = mix(left.lpFilterCutoff,      right.lpFilterCutoff,      u[17]);
+			child.lpFilterCutoffSweep = mix(left.lpFilterCutoffSweep, right.lpFilterCutoffSweep, u[18]);
+			child.lpFilterResonance   = mix(left.lpFilterResonance,   right.lpFilterResonance,   u[19]);
 			
-			child.params.hpFilterCutoff      = mix(left.params.hpFilterCutoff,      right.params.hpFilterCutoff,      u[20]);
-			child.params.hpFilterCutoffSweep = mix(left.params.hpFilterCutoffSweep, right.params.hpFilterCutoffSweep, u[21]);
+			child.hpFilterCutoff      = mix(left.hpFilterCutoff,      right.hpFilterCutoff,      u[20]);
+			child.hpFilterCutoffSweep = mix(left.hpFilterCutoffSweep, right.hpFilterCutoffSweep, u[21]);
 		}
 		
 		/**
@@ -524,12 +498,14 @@
 		 */
 		private function onSweeperChange(sweeper:TinySlider):void
 		{
-			interpolate(_synthS, _synthL, _synthR, sweeper.value);
+			interpolate(_synthS.params, _synthL.params, _synthR.params, sweeper.value);
 			
 			_synthS.play();
 			
 			updateSliders();
 			updateCopyPaste();
+			
+			_sweepVis.refresh(_synthS.params);
 		}
 		
 		/**
