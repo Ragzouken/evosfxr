@@ -5,9 +5,12 @@ package ui
 	import flash.display.GraphicsPath;
 	import flash.display.GraphicsSolidFill;
 	import flash.display.GraphicsStroke;
+	import flash.display.GraphicsPathCommand;
 	import flash.display.IGraphicsData;
 	import flash.display.JointStyle;
 	import flash.display.LineScaleMode;
+	import flash.display.Shader;
+	import flash.display.Shape;
 	import flash.display.Sprite;
 	import flash.events.ContextMenuEvent;
 	import flash.events.Event;
@@ -49,18 +52,22 @@ package ui
 		
 		protected var _enabled:Boolean;
 		
+		protected var _graphic:Shape;
+		
 		public function get params():SfxrParams { return _synth.params.clone(); }
 		public function set params(params:SfxrParams):void
 		{
 			_synth.params = params.clone();
+			
+			refreshGraphic();
 		}
 		
 		public function get selected():Boolean { return _select.selected; }
 		
 		public function get enabled():Boolean { return _enabled; }
-		public function set enabled(v:Boolean):void
+		public function set enabled(value:Boolean):void
 		{
-			_enabled = v;
+			_enabled = value;
 			
 			_play.enabled   = _enabled;
 			_select.enabled = _enabled;
@@ -68,11 +75,17 @@ package ui
 			_export.enabled = _enabled;
 			
 			_select.selected = false;
+			
+			if(value) 	_graphic.alpha = 1.0;
+			else		_graphic.alpha = 0.3;
 		}
 		
 		public function Individual(app:SfxrApp, x:int, y:int)
 		{
 			_app = app;
+			
+			_graphic = new Shape();
+			addChild(_graphic);
 			
 			_synth = new SfxrSynth();
 			_synth.params.randomize();
@@ -102,6 +115,8 @@ package ui
 			_export.x = x + 3 + 54;
 			_export.y = y + 3 + 104 - 18;
 			addChild(_export);
+			
+			refreshGraphic();
 		}
 		
 		protected function play(button:TinyButton):void
@@ -124,6 +139,64 @@ package ui
 		{
 			var file:ByteArray = _synth.getWavFile(44100, 16);
 			new FileReference().save(file, "sfx.wav");
+		}
+		
+		public function refreshGraphic():void
+		{
+			removeChild(_graphic);
+			_graphic = new Shape();
+			addChild(_graphic);
+			
+			var lines:Vector.<IGraphicsData> = new Vector.<IGraphicsData>();
+			lines.push(new GraphicsStroke(1, false, LineScaleMode.NORMAL, CapsStyle.NONE, JointStyle.MITER, 3, new GraphicsSolidFill(0x000000)));
+			
+			var operations:Vector.<int> = new Vector.<int>();
+			var coordinates:Vector.<Number> = new Vector.<Number>;
+			
+			var data:Vector.<Number> = _synth.params.data();
+			
+			var px:Number = _play.x + 110/2, py:Number = _play.y+60/2, pa:Number = 0, nx:Number, ny:Number, na:Number;
+			var d:Number = 60/data.length, da:Number = Math.PI / 2;
+			var value:Number;
+			
+			coordinates.push(int(px));
+			coordinates.push(int(py));
+			operations.push(GraphicsPathCommand.MOVE_TO);
+			for (var i:int = 0; i < 12; ++i) {
+				value = data[i];
+				
+				na = pa + value * da;
+				nx = px + d * Math.cos(na);
+				ny = py + d * Math.sin(na);
+				
+				coordinates.push(int(nx));
+				coordinates.push(int(ny));
+				operations.push(GraphicsPathCommand.LINE_TO);
+				
+				px = nx; py = ny; pa = na;
+			}
+			
+			px = _play.x + 110 / 2; py = _play.y + 60 / 2; pa = Math.PI + da * data[11];
+			
+			coordinates.push(int(px));
+			coordinates.push(int(py));
+			operations.push(GraphicsPathCommand.MOVE_TO);
+			for (var i:int = 12; i < data.length; ++i) {
+				value = data[i];
+				
+				na = pa + value * -da;
+				nx = px + d * Math.cos(na);
+				ny = py + d * Math.sin(na);
+				
+				coordinates.push(int(nx));
+				coordinates.push(int(ny));
+				operations.push(GraphicsPathCommand.LINE_TO);
+				
+				px = nx; py = ny; pa = na;
+			}
+			
+			lines.push(new GraphicsPath(operations, coordinates));
+			_graphic.graphics.drawGraphicsData(lines);
 		}
 	}
 }

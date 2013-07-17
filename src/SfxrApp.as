@@ -324,14 +324,12 @@
 				}
 			}
 			
-			trace(_recombined.length);
+			_selected.length = 0;
 			
 			// switch to cross over to perform remaining crossover
-			if (_selected.length > 0) {
-				_selected.length = 0;
+			if (_crossover.length > 0) {
 				switchToCrossover();
 			} else {
-				_selected.length = 0;
 				switchToSelection();
 			}
 		}
@@ -481,6 +479,43 @@
 			
 			child.params.hpFilterCutoff      = mix(left.params.hpFilterCutoff,      right.params.hpFilterCutoff,      u);
 			child.params.hpFilterCutoffSweep = mix(left.params.hpFilterCutoffSweep, right.params.hpFilterCutoffSweep, u);
+		}
+		
+		private function cross(child:SfxrSynth, left:SfxrSynth, right:SfxrSynth, u:Vector.<Number>):void
+		{
+			//child.params.masterVolume = _synth.params.masterVolume; //mix(left.params.masterVolume, right.params.masterVolume, u);
+			
+			child.params.attackTime   = mix(left.params.attackTime,   right.params.attackTime,   u[0]);
+			child.params.sustainTime  = mix(left.params.sustainTime,  right.params.sustainTime,  u[1]);
+			child.params.sustainPunch = mix(left.params.sustainPunch, right.params.sustainPunch, u[2]);
+			child.params.decayTime    = mix(left.params.decayTime,    right.params.decayTime,    u[3]);
+			
+			child.params.startFrequency = mix(left.params.startFrequency, right.params.startFrequency, u[4]);
+			child.params.minFrequency   = mix(left.params.minFrequency,   right.params.minFrequency,   u[5]);
+			
+			child.params.slide      = mix(left.params.slide,      right.params.slide,      u[6]);
+			child.params.deltaSlide = mix(left.params.deltaSlide, right.params.deltaSlide, u[7]);
+			
+			child.params.vibratoDepth = mix(left.params.vibratoDepth, right.params.vibratoDepth, u[8]);
+			child.params.vibratoSpeed = mix(left.params.vibratoSpeed, right.params.vibratoSpeed, u[9]);
+			
+			child.params.changeAmount = mix(left.params.changeAmount, right.params.changeAmount, u[10]);
+			child.params.changeSpeed  = mix(left.params.changeSpeed,  right.params.changeSpeed,  u[11]);
+			
+			child.params.squareDuty = mix(left.params.squareDuty, right.params.squareDuty, u[12]);
+			child.params.dutySweep  = mix(left.params.dutySweep,  right.params.dutySweep,  u[13]);
+			
+			child.params.repeatSpeed = mix(left.params.repeatSpeed, right.params.repeatSpeed, u[14]);
+			
+			child.params.phaserOffset = mix(left.params.phaserOffset, right.params.phaserOffset, u[15]);
+			child.params.phaserSweep  = mix(left.params.phaserSweep,  right.params.phaserSweep,  u[16]);
+			
+			child.params.lpFilterCutoff      = mix(left.params.lpFilterCutoff,      right.params.lpFilterCutoff,      u[17]);
+			child.params.lpFilterCutoffSweep = mix(left.params.lpFilterCutoffSweep, right.params.lpFilterCutoffSweep, u[18]);
+			child.params.lpFilterResonance   = mix(left.params.lpFilterResonance,   right.params.lpFilterResonance,   u[19]);
+			
+			child.params.hpFilterCutoff      = mix(left.params.hpFilterCutoff,      right.params.hpFilterCutoff,      u[20]);
+			child.params.hpFilterCutoffSweep = mix(left.params.hpFilterCutoffSweep, right.params.hpFilterCutoffSweep, u[21]);
 		}
 		
 		/**

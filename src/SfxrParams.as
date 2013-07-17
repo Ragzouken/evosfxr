@@ -629,6 +629,36 @@ package
 		//
 		//--------------------------------------------------------------------------
 		
+		public function data():Vector.<Number>
+		{
+			var data:Vector.<Number> = new Vector.<Number>;
+			
+			data.push(_attackTime);
+			data.push(_sustainTime);
+			data.push(_sustainPunch);
+			data.push(_decayTime);
+			data.push(_startFrequency);
+			data.push(_minFrequency);
+			data.push(_slide);
+			data.push(_deltaSlide);
+			data.push(_vibratoDepth);
+			data.push(_vibratoSpeed);
+			data.push(_changeAmount);
+			data.push(_changeSpeed);
+			data.push(_squareDuty);
+			data.push(_dutySweep);
+			data.push(_repeatSpeed);
+			data.push(_phaserOffset);
+			data.push(_phaserSweep);
+			data.push(_lpFilterCutoff);
+			data.push(_lpFilterCutoffSweep);
+			data.push(_lpFilterResonance);
+			data.push(_hpFilterCutoff);
+			data.push(_hpFilterCutoffSweep);
+			
+			return data;
+		}
+		
 		/**
 		 * Clams a value to betwen 0 and 1
 		 * @param	value	Input value
