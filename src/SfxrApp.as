@@ -364,7 +364,7 @@
 				}
 			}
 			
-			while (_crossover.length / 2 < 4) {
+			while (_crossover.length / 2 < 4 && _selected.length > 0) {
 				var base:SfxrParams = _selected[Math.floor(_selected.length * Math.random())];
 				var other:SfxrParams = new SfxrParams();
 				other.randomize();
