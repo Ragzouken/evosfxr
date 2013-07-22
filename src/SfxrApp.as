@@ -362,8 +362,16 @@
 						_crossover.push(mate.clone());
 					}
 				}
-			} else if (_selected.length == 1) {
-				_recombined.push(_selected[0]);
+			}
+			
+			while (_crossover.length / 2 < 4) {
+				var base:SfxrParams = _selected[Math.floor(_selected.length * Math.random())];
+				var other:SfxrParams = new SfxrParams();
+				other.randomize();
+				other.waveType = 0;
+				
+				_crossover.push(base.clone());
+				_crossover.push(other);
 			}
 			
 			_selected.length = 0;
