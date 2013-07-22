@@ -364,14 +364,18 @@
 				}
 			}
 			
-			while (_crossover.length / 2 < 4 && _selected.length > 0) {
-				var base:SfxrParams = _selected[Math.floor(_selected.length * Math.random())];
+			var index:int = Math.floor(_selected.length * Math.random());
+			
+			while (_crossover.length / 2 < 2 * Math.ceil(Math.pow(_selected.length, 0.6))) {
+				var base:SfxrParams = _selected[index];
 				var other:SfxrParams = new SfxrParams();
 				other.randomize();
 				other.waveType = 0;
 				
 				_crossover.push(base.clone());
 				_crossover.push(other);
+				
+				index = (index + 1) % _selected.length;
 			}
 			
 			_selected.length = 0;
