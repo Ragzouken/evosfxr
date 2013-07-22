@@ -340,29 +340,31 @@
 				}
 			}
 			
-			var pairings:Dictionary = new Dictionary();
-		
-			for each (var parent:SfxrParams in _selected) {
-				pairings[parent] = new Vector.<SfxrParams>();
-			}
+			if (_selected.length > 1) {
+				var pairings:Dictionary = new Dictionary();
 			
-			for each (var parent:SfxrParams in _selected) {
-				if (_selected.length > pairings[parent].length + 1) {
-					var mate:SfxrParams = parent;
-					
-					while (mate === parent || pairings[mate].indexOf(parent) >= 0) {
-						mate = _selected[Math.floor(_selected.length * Math.random())];
-					}
-					
-					pairings[parent].push(mate);
-					pairings[mate].push(parent);
-					
-					_crossover.push(parent.clone());
-					_crossover.push(mate.clone());
+				for each (var parent:SfxrParams in _selected) {
+					pairings[parent] = new Vector.<SfxrParams>();
 				}
+				
+				for each (var parent:SfxrParams in _selected) {
+					if (_selected.length > pairings[parent].length + 1) {
+						var mate:SfxrParams = parent;
+						
+						while (mate === parent || pairings[mate].indexOf(parent) >= 0) {
+							mate = _selected[Math.floor(_selected.length * Math.random())];
+						}
+						
+						pairings[parent].push(mate);
+						pairings[mate].push(parent);
+						
+						_crossover.push(parent.clone());
+						_crossover.push(mate.clone());
+					}
+				}
+			} else if (_selected.length == 1) {
+				_recombined.push(_selected[0]);
 			}
-			
-			//generatePopulation(8 - _crossover.length / 2);
 			
 			_selected.length = 0;
 			
