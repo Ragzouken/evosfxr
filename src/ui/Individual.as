@@ -80,13 +80,12 @@ package ui
 			else		_graphic.alpha = 0.3;
 		}
 		
-		public function Individual(app:SfxrApp, x:int, y:int)
+		public function Individual(app:SfxrApp, x:int, y:int, params:SfxrParams)
 		{
 			_app = app;
 			
 			_synth = new SfxrSynth();
-			_synth.params.randomize();
-			_synth.params.waveType = 0;
+			_synth.params = params;
 			//_synth.params.masterVolume = 0;
 			
 			_play = new TinyButton(this.play, "PLAY", 1, false, 104, 60);

@@ -501,6 +501,38 @@ package
 			}
 		}
 		
+				public function distance(params:SfxrParams):Number
+		{
+			var sum:Number = 0;
+			
+			sum += pow(_startFrequency - params.startFrequency, 2);
+			sum += pow(_minFrequency   - params.minFrequency,   2);
+			sum += pow((_slide         - params.slide)/2,       2);
+			sum += pow((_deltaSlide    - params.deltaSlide)/2,  2);
+			sum += pow(_squareDuty     - params.squareDuty,     2);
+			sum += pow((_dutySweep     - params.dutySweep)/2,   2);
+			sum += pow(_vibratoDepth   - params.vibratoDepth,   2);
+			sum += pow(_vibratoSpeed   - params.vibratoSpeed,   2);
+			sum += pow(_attackTime     - params.attackTime,     2);
+			sum += pow(_sustainTime    - params.sustainTime,    2);
+			sum += pow(_decayTime      - params.decayTime,      2);
+			sum += pow(_sustainPunch   - params.sustainPunch,   2);
+			
+			sum += pow(_lpFilterResonance   - params.lpFilterResonance,   2);
+			sum += pow(_lpFilterCutoff      - params.lpFilterCutoff,      2);
+			sum += pow((_lpFilterCutoffSweep - params.lpFilterCutoffSweep)/2, 2);
+			sum += pow(_hpFilterCutoff      - params.lpFilterCutoff,      2);
+			sum += pow((_hpFilterCutoffSweep - params.hpFilterCutoffSweep)/2, 2);
+			
+			sum += pow((_phaserOffset  - params.phaserOffset)/2, 2);
+			sum += pow((_phaserSweep   - params.phaserSweep)/2,  2);
+			sum += pow(_repeatSpeed    - params.repeatSpeed,  2);
+			sum += pow(_changeSpeed    - params.changeSpeed,  2);
+			sum += pow((_changeAmount  - params.changeAmount)/2, 2);
+			
+			return Math.sqrt(sum) / Math.sqrt(22);
+		}
+		
 		//--------------------------------------------------------------------------
 		//	
 		//  Settings String Methods

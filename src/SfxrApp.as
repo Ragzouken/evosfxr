@@ -208,15 +208,20 @@
 			var spacing:int = (sweeperWidth - 110 * 4) / 3 + 110;
 			var offset:int = (width - sweeperWidth) / 2;
 			
+			generatePopulation();
+			
 			_individuals = new Vector.<Individual>();
 			
 			for (var y:int = 0; y < 2; ++y) {
 				for (var x:int = 0; x < 4; ++x) {
-					var individual:Individual = new Individual(this, x * spacing + offset, y * spacing + offset);
+					var config:SfxrParams = _recombined.pop();
+					var individual:Individual = new Individual(this, x * spacing + offset, y * spacing + offset, config);
 					_individuals.push(individual);
 					addChild(individual);
 				}
 			}
+			
+			assessDiversity();
 			
 			_confirmSelection = addButton("CONFIRM", selectionConfirmed, width/2 - 52, spacing + offset + 110 + 18);
 			
@@ -270,6 +275,49 @@
 			});
 		}
 		
+		private function generatePopulation():void
+		{
+			var bound:Number = 0.35;
+			
+			while (_recombined.length != 8) {
+				var config:SfxrParams = new SfxrParams();
+				var min:Number = 0;
+				
+				while (min < bound) {
+					config.randomize();
+					config.waveType = 0;
+					
+					min = 1;
+					
+					for each (var other:SfxrParams in _recombined) {
+						var distance:Number = config.distance(other);
+						min = Math.min(min, distance);
+					}
+				}
+				
+				_recombined.push(config);
+			}
+		}
+		
+		private function assessDiversity():void
+		{
+			var distances:Vector.<Number> = new Vector.<Number>();
+			var sum:Number = 0;
+			
+			var min:Number = 1;
+			for (var i:int = 0; i < 8; ++i) {
+				for (var j:int = i+1; j < 8; ++j) {
+					var distance:Number = _individuals[i].params.distance(_individuals[j].params)
+					distances.push(distance);
+					sum += distance;
+					
+					min = Math.min(min, distance);
+				}
+			}
+			
+			trace("min: " + min + " avg: " + (sum / distances.length));
+		}
+		
 		private function childSelected(button:TinyButton):void
 		{
 			_recombined.push(_synthS.params.clone());
@@ -314,24 +362,7 @@
 				}
 			}
 			
-			for (var i:int = 0; i < 8 - _crossover.length / 2; ++i) {
-				if (_selected.length > 0) {
-					var parent:SfxrParams = _selected[Math.floor(_selected.length * Math.random())];
-					
-					parent = parent.clone();
-					parent.mutate(0.75 / _selected.length);
-					parent.waveType = 0;
-					//parent.masterVolume = 0.5;
-					
-					_recombined.push(parent);
-				} else {
-					var random:SfxrParams = new SfxrParams();
-					random.randomize();
-					random.waveType = 0;
-					//random.masterVolume = 0.5;
-					_recombined.push(random);
-				}
-			}
+			//generatePopulation(8 - _crossover.length / 2);
 			
 			_selected.length = 0;
 			
@@ -362,6 +393,8 @@
 		
 		private function switchToSelection():void
 		{
+			generatePopulation();
+			
 			for (var i:int = 0; i < 8; ++i) {
 				_individuals[i].params = _recombined[i];
 			}
@@ -377,6 +410,8 @@
 			_sweeper.enabled = false;
 			_sweepVis.enabled = false;
 			_confirmCrossover.enabled = false;
+			
+			assessDiversity();
 		}
 		
 		private function clickLoadFactory(synth:SfxrSynth):Function
